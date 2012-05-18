@@ -19,7 +19,7 @@ import Keys._
 
 object MinimalBuild extends Build {
 
-  lazy val buildVersion = "1.0"
+  lazy val buildVersion = "0.1-SNAPSHOT"
 
   lazy val typesafe = "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
   lazy val typesafeSnapshot = "Typesafe Snapshots Repository" at "http://repo.typesafe.com/typesafe/snapshots/"
@@ -29,6 +29,9 @@ object MinimalBuild extends Build {
     organization := "com.romix.akka",
     resolvers += typesafe,
     resolvers += typesafeSnapshot,
+    publishArtifact in packageDoc := false,
+    // disable using the Scala version in output paths and artifacts
+    crossPaths := false,
     libraryDependencies += "com.typesafe.akka" % "akka-remote" % "2.0",
     libraryDependencies += "com.typesafe.akka" % "akka-kernel" % "2.0",
     libraryDependencies += "com.dyuproject.protostuff" % "protostuff-runtime" % "1.0.7",
