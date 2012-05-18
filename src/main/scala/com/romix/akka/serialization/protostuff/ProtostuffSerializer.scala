@@ -46,212 +46,212 @@ case class Wrapper(obj:AnyRef)
 class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer {
 
 	import ProtostuffSerialization._
-    val log = Logging(system, getClass.getName) 
-	
+	val log = Logging(system, getClass.getName) 
+
 	val settings = new Settings(system.settings.config)
-	
+
 	val mappings = settings.ClassNameMappings
 
 	locally {
-	   log.debug("Got mappings: {}", mappings)
+		log.debug("Got mappings: {}", mappings)
 	}
-	
+
 	val classnames = settings.ClassNames
 
 	locally {
-	   log.debug("Got classnames for incremental strategy: {}", classnames)
+		log.debug("Got classnames for incremental strategy: {}", classnames)
 	}
-		
+
 	val idstrategy = getIdStrategy(settings.IdStrategy)
 
 	locally {
-	   log.debug("Got idstrategy: {}", idstrategy)
+		log.debug("Got idstrategy: {}", idstrategy)
 	}
-		
+
 	val bufferSize = settings.BufferSize
-	
+
 	locally {
-	   log.debug("Got buffer-size: {}", bufferSize)
+		log.debug("Got buffer-size: {}", bufferSize)
 	}
-	
+
 	val serializer = settings.SerializerType match {
-		case "graph"  => new ProtostuffGraphSerializer(idstrategy, bufferSize)
-		case _    => new ProtostuffNoGraphSerializer(idstrategy, bufferSize)
+	case "graph"  => new ProtostuffGraphSerializer(idstrategy, bufferSize)
+	case _    => new ProtostuffNoGraphSerializer(idstrategy, bufferSize)
 	}
 
 	locally {
-	   log.debug("Got serializer: {}", serializer)
+		log.debug("Got serializer: {}", serializer)
 	}
-	
-	
-    // This is whether "fromBinary" requires a "clazz" or not
-    def includeManifest: Boolean = false
-     
-    // A unique identifier for this Serializer
-    def identifier = 123454321
-	
+
+
+	// This is whether "fromBinary" requires a "clazz" or not
+	def includeManifest: Boolean = false
+
+	// A unique identifier for this Serializer
+	def identifier = 123454321
+
 	// Delegate to a real serializer
 	def toBinary(obj: AnyRef): Array[Byte] = serializer.toBinary(obj) 
 	def fromBinary(bytes: Array[Byte], clazz: Option[Class[_]]): AnyRef = serializer.fromBinary(bytes, clazz)
-	
-    private def getIdStrategy(strategy: String): IdStrategy = {
-		strategy match  {
+
+	private def getIdStrategy(strategy: String): IdStrategy = {
+			strategy match  {
 			case "default" => return new DefaultIdStrategy()
-			
+
 			case "incremental" => {
 				val idNums = mappings.values map { case v => v.toInt }
 				val maxIdNum = if(!mappings.isEmpty) idNums.max else 1
-			
+
 				val r = new OnDemandIdStrategy.Registry(
-                    maxIdNum+1+64, maxIdNum+1, 
-                    maxIdNum+1+64, maxIdNum+1, 
-                    maxIdNum+1+64, maxIdNum+1, // enums
-                    maxIdNum+1+64, maxIdNum+1); // pojos
+						maxIdNum+1+64, maxIdNum+1, 
+						maxIdNum+1+64, maxIdNum+1, 
+						maxIdNum+1+64, maxIdNum+1, // enums
+						maxIdNum+1+64, maxIdNum+1); // pojos
 
 				r.registerPojo(classOf[Wrapper], 1)	
-				
+
 				for ((fqcn: String, idNum: String) <- mappings) {
 					val id = idNum.toInt
 					// Load class
 					system.dynamicAccess.getClassFor[AnyRef](fqcn) match {
-						case Right(clazz) => {
-							 
-							// Identity what it is: POJO, map, collection, enum
-							// Register it
-							if(clazz.isEnum()) 
-							  r.registerEnum(classOf[TimeUnit].getClass().cast(clazz), id)
-							else if(classOf[java.util.Map[_, _]].isAssignableFrom(clazz))  
-							  r.registerMap(MapSchema.MessageFactories.getFactory(fqcn), id)
-							else if(classOf[java.util.Collection[_]].isAssignableFrom(clazz))  
-							  r.registerCollection(CollectionSchema.MessageFactories.getFactory(fqcn), id)
-							else
-							  r.registerPojo(clazz, id)			
-					  }
-					  case Left(e) => {  log.error("Class could not be loaded and/or registered: {} ", fqcn); throw e }
+					case Right(clazz) => {
+
+						// Identity what it is: POJO, map, collection, enum
+						// Register it
+						if(clazz.isEnum()) 
+							r.registerEnum(classOf[TimeUnit].getClass().cast(clazz), id)
+						else if(classOf[java.util.Map[_, _]].isAssignableFrom(clazz))  
+							r.registerMap(MapSchema.MessageFactories.getFactory(fqcn), id)
+						else if(classOf[java.util.Collection[_]].isAssignableFrom(clazz))  
+							r.registerCollection(CollectionSchema.MessageFactories.getFactory(fqcn), id)
+						else
+							r.registerPojo(clazz, id)			
+					}
+					case Left(e) => {  log.error("Class could not be loaded and/or registered: {} ", fqcn); throw e }
 					}
 				}
-				
+
 				for(classname <- classnames) {
 					// Load class
 					system.dynamicAccess.getClassFor[AnyRef](classname) match {
 						// TODO: IncrementalIdStrategy should allow for registrarion of enums, maps, collections
 						// automatically
-						case Right(clazz) => r.strategy.register(clazz)
-						case Left(e) => { log.warning("Class could not be loaded and/or registered: {} ", classname); /* throw e */ }
+					case Right(clazz) => r.strategy.register(clazz)
+					case Left(e) => { log.warning("Class could not be loaded and/or registered: {} ", classname); /* throw e */ }
 					}
 				}
-				
+
 				return r.strategy
 			}
-			
+
 			case "explicit" => { 
 				val r = new ExplicitIdStrategy.Registry()
-				
+
 				r.registerPojo(classOf[Wrapper], 1)					
-				
+
 				for ((fqcn: String, idNum: String) <- mappings) {
 					val id = idNum.toInt
 					// Load class
 					system.dynamicAccess.getClassFor[AnyRef](fqcn) match {
-						case Right(clazz) => {
-							// Identity what it is: POJO, map, collection, enum
-							// Register it
-							if(clazz.isEnum()) 
-							  r.registerEnum(classOf[TimeUnit].getClass().cast(clazz), id)
-							else if(classOf[java.util.Map[_, _]].isAssignableFrom(clazz))  
-							  r.registerMap(MapSchema.MessageFactories.getFactory(fqcn), id)
-							else if(classOf[java.util.Collection[_]].isAssignableFrom(clazz))  
-							  r.registerCollection(CollectionSchema.MessageFactories.getFactory(fqcn), id)
-							else  
-							  r.registerPojo(clazz, id)	
-						}
-						
-						case Left(e) => { log.error("Class could not be loaded and/or registered: {} ", fqcn); throw e}
+					case Right(clazz) => {
+						// Identity what it is: POJO, map, collection, enum
+						// Register it
+						if(clazz.isEnum()) 
+							r.registerEnum(classOf[TimeUnit].getClass().cast(clazz), id)
+						else if(classOf[java.util.Map[_, _]].isAssignableFrom(clazz))  
+							r.registerMap(MapSchema.MessageFactories.getFactory(fqcn), id)
+						else if(classOf[java.util.Collection[_]].isAssignableFrom(clazz))  
+							r.registerCollection(CollectionSchema.MessageFactories.getFactory(fqcn), id)
+						else  
+							r.registerPojo(clazz, id)	
+					}
+
+					case Left(e) => { log.error("Class could not be loaded and/or registered: {} ", fqcn); throw e}
 					}
 				}
 				return r.strategy
 			}
+			}
 		}
-	}
-	
-      
+
+
 }
 
 /***
    Protostuff serializer that supports object graphs with nodes sharing.
    It produces smaller serialized representations, but introduces a bit more overhead.
-*/
+ */
 class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int) extends Serializer {
-		
-	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy);	
-     
-    // This is whether "fromBinary" requires a "clazz" or not
-    def includeManifest: Boolean = false
-     
-    // A unique identifier for this Serializer
-    def identifier = 12454321
-     
-    // "toBinary" serializes the given object to an Array of Bytes
-    def toBinary(obj: AnyRef): Array[Byte] = {
-			val buffer = LinkedBuffer.allocate(bufferSize)
-			var payload: Array[Byte] = null
-			val wrapper = new Wrapper(obj)
 
-			try {
-				payload = GraphIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
-			} catch {
-				case e:Exception => e.printStackTrace()
-			} finally {
-				buffer.clear()
-			}
-						
-			payload
-    }
-     
-    // "fromBinary" deserializes the given array,
-    // using the type hint (if any, see "includeManifest" above)
-    // into the optionally provided classLoader.
-    def fromBinary(bytes: Array[Byte], clazz: Option[Class[_]]): AnyRef = {
+	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy);	
+
+	// This is whether "fromBinary" requires a "clazz" or not
+	def includeManifest: Boolean = false
+
+	// A unique identifier for this Serializer
+	def identifier = 12454321
+
+	// "toBinary" serializes the given object to an Array of Bytes
+	def toBinary(obj: AnyRef): Array[Byte] = {
+		val buffer = LinkedBuffer.allocate(bufferSize)
+		var payload: Array[Byte] = null
+		val wrapper = new Wrapper(obj)
+
+		try {
+			payload = GraphIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
+		} catch {
+		case e:Exception => e.printStackTrace()
+		} finally {
+			buffer.clear()
+		}
+
+		payload
+	}
+
+	// "fromBinary" deserializes the given array,
+	// using the type hint (if any, see "includeManifest" above)
+	// into the optionally provided classLoader.
+	def fromBinary(bytes: Array[Byte], clazz: Option[Class[_]]): AnyRef = {
 		val wrapper = new Wrapper(null)
 		GraphIOUtil.mergeFrom(bytes, wrapper, wrapperSchema)
 		wrapper.obj
-    }
+	}
 }
 
 /***
    Protostuff serializer that supports object graphs without nodes sharing.
-*/
+ */
 class ProtostuffNoGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int) extends Serializer {
 
 	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy);
-     
-    // This is whether "fromBinary" requires a "clazz" or not
-    def includeManifest: Boolean = false
-     
-    // A unique identifier for this Serializer
-    def identifier = 12454321
-     
-    // "toBinary" serializes the given object to an Array of Bytes
-    def toBinary(obj: AnyRef): Array[Byte] = {
-			val buffer = LinkedBuffer.allocate(bufferSize)
-			var payload: Array[Byte] = null
-			val wrapper = new Wrapper(obj)
 
-			try {
-				payload = ProtostuffIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
-			} finally {
-				buffer.clear()
-			}
-						
-			payload
-    }
-     
-    // "fromBinary" deserializes the given array,
-    // using the type hint (if any, see "includeManifest" above)
-    // into the optionally provided classLoader.
-    def fromBinary(bytes: Array[Byte], clazz: Option[Class[_]]): AnyRef = {
+	// This is whether "fromBinary" requires a "clazz" or not
+	def includeManifest: Boolean = false
+
+	// A unique identifier for this Serializer
+	def identifier = 12454321
+
+	// "toBinary" serializes the given object to an Array of Bytes
+	def toBinary(obj: AnyRef): Array[Byte] = {
+		val buffer = LinkedBuffer.allocate(bufferSize)
+		var payload: Array[Byte] = null
+		val wrapper = new Wrapper(obj)
+
+		try {
+			payload = ProtostuffIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
+		} finally {
+			buffer.clear()
+		}
+
+		payload
+	}
+
+	// "fromBinary" deserializes the given array,
+	// using the type hint (if any, see "includeManifest" above)
+	// into the optionally provided classLoader.
+	def fromBinary(bytes: Array[Byte], clazz: Option[Class[_]]): AnyRef = {
 		val wrapper = new Wrapper(null)
 		ProtostuffIOUtil.mergeFrom(bytes, wrapper, wrapperSchema)
 		wrapper.obj
-    }
+	}
 }
