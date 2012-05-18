@@ -26,7 +26,7 @@ object MinimalBuild extends Build {
 
   lazy val root = Project(id = "akka-protostuff-serialization", base = file("."), settings = Project.defaultSettings).settings(
     version := buildVersion,
-    organization := "com.romix",
+    organization := "com.romix.akka",
     resolvers += typesafe,
     resolvers += typesafeSnapshot,
     libraryDependencies += "com.typesafe.akka" % "akka-remote" % "2.0",
