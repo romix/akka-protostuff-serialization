@@ -9,6 +9,7 @@ Features
 *   It is more efficient than Java serialization - both in size and speed 
 *   Does not require any additional build steps like compiling proto files, when using protobuf serialization
 *   Almost any Scala and Java class can be serialized using it without any additional configuration or code changes
+*   Apache 2.0 license
 
 How to use this library in your project
 ----------------------------------------
