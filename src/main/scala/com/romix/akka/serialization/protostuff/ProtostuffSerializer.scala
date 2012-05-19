@@ -39,7 +39,6 @@ import scala.util.DynamicVariable
 import java.lang.System
 
 import ProtostuffSerialization._
-import java.util.concurrent.TimeUnit     
 
 class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer {
 
@@ -117,7 +116,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 						// Identity what it is: POJO, map, collection, enum
 						// Register it
 						if(clazz.isEnum()) 
-							r.registerEnum(classOf[TimeUnit].getClass().cast(clazz), id)
+							r.registerEnum(clazz.asInstanceOf[Class[T] forSome {type T <: java.lang.Enum[T]}], id)
 						else if(classOf[java.util.Map[_, _]].isAssignableFrom(clazz))  
 							r.registerMap(MapSchema.MessageFactories.getFactory(fqcn), id)
 						else if(classOf[java.util.Collection[_]].isAssignableFrom(clazz))  
@@ -161,7 +160,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 						// Identity what it is: POJO, map, collection, enum
 						// Register it
 						if(clazz.isEnum()) 
-							r.registerEnum(classOf[TimeUnit].getClass().cast(clazz), id)
+							r.registerEnum(clazz.asInstanceOf[Class[T] forSome {type T <: java.lang.Enum[T]}], id)
 						else if(classOf[java.util.Map[_, _]].isAssignableFrom(clazz))  
 							r.registerMap(MapSchema.MessageFactories.getFactory(fqcn), id)
 						else if(classOf[java.util.Collection[_]].isAssignableFrom(clazz))  
