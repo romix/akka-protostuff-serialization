@@ -36,17 +36,17 @@ object ProtostuffSerialization {
     import config._
 
 	// type can be: graph, simple
-    val SerializerType: String = if(config.hasPath("akka.actor.protostuff.type")) config.getString("akka.actor.protostuff.type") else "graph"
+    val SerializerType: String = config.getString("akka.actor.protostuff.type")
 
-    val BufferSize: Int = if(config.hasPath("akka.actor.protostuff.buffer-size")) config.getInt("akka.actor.protostuff.buffer-size") else 4096
+    val BufferSize: Int = config.getInt("akka.actor.protostuff.buffer-size")
 	
 	// Each entry should be: FQCN -> integer id
-    val ClassNameMappings: Map[String, String] = if (config.hasPath("akka.actor.protostuff.mappings")) configToMap(getConfig("akka.actor.protostuff.mappings")) else Map[String, String]()
+    val ClassNameMappings: Map[String, String] = configToMap(getConfig("akka.actor.protostuff.mappings"))
 
-    val ClassNames: java.util.List[String] = if (config.hasPath("akka.actor.protostuff.classes")) config.getStringList("akka.actor.protostuff.classes") else new java.util.ArrayList()
+    val ClassNames: java.util.List[String] = config.getStringList("akka.actor.protostuff.classes")
 	
 	// Strategy: default, explicit, incremental
-    val IdStrategy: String = if(config.hasPath("akka.actor.protostuff.idstrategy")) config.getString("akka.actor.protostuff.idstrategy") else "default"
+    val IdStrategy: String = config.getString("akka.actor.protostuff.idstrategy")
 
     private def configToMap(cfg: Config): Map[String, String] =
       cfg.root.unwrapped.asScala.toMap.map { case (k, v) => (k, v.toString) }
