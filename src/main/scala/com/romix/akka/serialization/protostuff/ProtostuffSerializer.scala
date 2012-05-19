@@ -41,8 +41,6 @@ import java.lang.System
 import ProtostuffSerialization._
 import java.util.concurrent.TimeUnit     
 
-case class Wrapper(obj:AnyRef)
-
 class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer {
 
 	import ProtostuffSerialization._
@@ -108,7 +106,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 						maxIdNum+1+64, maxIdNum+1, // enums
 						maxIdNum+1+64, maxIdNum+1) // pojos
 
-				r.registerPojo(classOf[Wrapper], 1)	
+				r.registerPojo(classOf[Some[_]], 1)	
 
 				for ((fqcn: String, idNum: String) <- mappings) {
 					val id = idNum.toInt
@@ -153,7 +151,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 			case "explicit" => { 
 				val r = new ExplicitIdStrategy.Registry()
 
-				r.registerPojo(classOf[Wrapper], 1)					
+				r.registerPojo(classOf[Some[_]], 1)					
 
 				for ((fqcn: String, idNum: String) <- mappings) {
 					val id = idNum.toInt
@@ -192,7 +190,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
  */
 class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int) extends Serializer {
 
-	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy)	
+	val wrapperSchema = RuntimeSchema.getSchema(classOf[Some[_]], idStrategy)	
 
 	// This is whether "fromBinary" requires a "clazz" or not
 	def includeManifest: Boolean = false
@@ -203,7 +201,7 @@ class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int)
 	// "toBinary" serializes the given object to an Array of Bytes
 	def toBinary(obj: AnyRef): Array[Byte] = {
 		val buffer = LinkedBuffer.allocate(bufferSize)
-		val wrapper = new Wrapper(obj)
+		val wrapper = Some(obj)
 
 		try 
 			GraphIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
@@ -215,9 +213,9 @@ class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int)
 	// using the type hint (if any, see "includeManifest" above)
 	// into the optionally provided classLoader.
 	def fromBinary(bytes: Array[Byte], clazz: Option[Class[_]]): AnyRef = {
-		val wrapper = new Wrapper(null)
+		val wrapper = Some(null)
 		GraphIOUtil.mergeFrom(bytes, wrapper, wrapperSchema)
-		wrapper.obj
+		wrapper.get
 	}
 }
 
@@ -226,7 +224,7 @@ class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int)
  */
 class ProtostuffNoGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int) extends Serializer {
 
-	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy)
+	val wrapperSchema = RuntimeSchema.getSchema(classOf[Some[_]], idStrategy)
 
 	// This is whether "fromBinary" requires a "clazz" or not
 	def includeManifest: Boolean = false
@@ -237,7 +235,7 @@ class ProtostuffNoGraphSerializer(val idStrategy: IdStrategy, val bufferSize: In
 	// "toBinary" serializes the given object to an Array of Bytes
 	def toBinary(obj: AnyRef): Array[Byte] = {
 		val buffer = LinkedBuffer.allocate(bufferSize)
-		val wrapper = new Wrapper(obj)
+		val wrapper = Some(obj)
 
 		try 
 			ProtostuffIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
@@ -249,8 +247,8 @@ class ProtostuffNoGraphSerializer(val idStrategy: IdStrategy, val bufferSize: In
 	// using the type hint (if any, see "includeManifest" above)
 	// into the optionally provided classLoader.
 	def fromBinary(bytes: Array[Byte], clazz: Option[Class[_]]): AnyRef = {
-		val wrapper = new Wrapper(null)
+		val wrapper = Some(null)
 		ProtostuffIOUtil.mergeFrom(bytes, wrapper, wrapperSchema)
-		wrapper.obj
+		wrapper.get
 	}
 }
