@@ -106,7 +106,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 						maxIdNum+1+64, maxIdNum+1, 
 						maxIdNum+1+64, maxIdNum+1, 
 						maxIdNum+1+64, maxIdNum+1, // enums
-						maxIdNum+1+64, maxIdNum+1); // pojos
+						maxIdNum+1+64, maxIdNum+1) // pojos
 
 				r.registerPojo(classOf[Wrapper], 1)	
 
@@ -127,7 +127,10 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 						else
 							r.registerPojo(clazz, id)			
 					}
-					case Left(e) => {  log.error("Class could not be loaded and/or registered: {} ", fqcn); throw e }
+					case Left(e) => {  
+							log.error("Class could not be loaded and/or registered: {} ", fqcn) 
+							throw e 
+						}
 					}
 				}
 
@@ -137,7 +140,10 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 						// TODO: IncrementalIdStrategy should allow for registrarion of enums, maps, collections
 						// automatically
 					case Right(clazz) => r.strategy.register(clazz)
-					case Left(e) => { log.warning("Class could not be loaded and/or registered: {} ", classname); /* throw e */ }
+					case Left(e) => { 
+							log.warning("Class could not be loaded and/or registered: {} ", classname) 
+							/* throw e */ 
+						}
 					}
 				}
 
@@ -166,7 +172,10 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 							r.registerPojo(clazz, id)	
 					}
 
-					case Left(e) => { log.error("Class could not be loaded and/or registered: {} ", fqcn); throw e}
+					case Left(e) => { 
+							log.error("Class could not be loaded and/or registered: {} ", fqcn) 
+							throw e
+						}
 					}
 				}
 				return r.strategy
@@ -183,7 +192,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
  */
 class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int) extends Serializer {
 
-	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy);	
+	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy)	
 
 	// This is whether "fromBinary" requires a "clazz" or not
 	def includeManifest: Boolean = false
@@ -194,18 +203,12 @@ class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int)
 	// "toBinary" serializes the given object to an Array of Bytes
 	def toBinary(obj: AnyRef): Array[Byte] = {
 		val buffer = LinkedBuffer.allocate(bufferSize)
-		var payload: Array[Byte] = null
 		val wrapper = new Wrapper(obj)
 
-		try {
-			payload = GraphIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
-		} catch {
-		case e:Exception => e.printStackTrace()
-		} finally {
+		try 
+			GraphIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
+		finally 
 			buffer.clear()
-		}
-
-		payload
 	}
 
 	// "fromBinary" deserializes the given array,
@@ -223,7 +226,7 @@ class ProtostuffGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int)
  */
 class ProtostuffNoGraphSerializer(val idStrategy: IdStrategy, val bufferSize: Int) extends Serializer {
 
-	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy);
+	val wrapperSchema = RuntimeSchema.getSchema(classOf[Wrapper], idStrategy)
 
 	// This is whether "fromBinary" requires a "clazz" or not
 	def includeManifest: Boolean = false
@@ -234,16 +237,12 @@ class ProtostuffNoGraphSerializer(val idStrategy: IdStrategy, val bufferSize: In
 	// "toBinary" serializes the given object to an Array of Bytes
 	def toBinary(obj: AnyRef): Array[Byte] = {
 		val buffer = LinkedBuffer.allocate(bufferSize)
-		var payload: Array[Byte] = null
 		val wrapper = new Wrapper(obj)
 
-		try {
-			payload = ProtostuffIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
-		} finally {
+		try 
+			ProtostuffIOUtil.toByteArray(wrapper, wrapperSchema, buffer)
+		finally 
 			buffer.clear()
-		}
-
-		payload
 	}
 
 	// "fromBinary" deserializes the given array,
