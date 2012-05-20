@@ -82,8 +82,8 @@ The following options are available for configuring this serializer:
 			# This section is ignored   for idstartegy=default  
 			# This section is ignored   for idstartegy=explicit  
 			classes = [  
-				"com.romix.akka.serialization.protostuff.StringMessage",  
-				"com.romix.akka.serialization.protostuff.ProtostuffSerializer"  
+				"package3.name3.className3",  
+				"package4.name4.className4"  
 			]  
 		}
 
