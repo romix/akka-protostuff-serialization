@@ -23,6 +23,7 @@ import com.typesafe.config.ConfigFactory
 import com.dyuproject.protostuff.ProtostuffIOUtil
 import com.dyuproject.protostuff.GraphIOUtil
 import com.dyuproject.protostuff.LinkedBuffer
+import com.dyuproject.protostuff.runtime.RegistryUtil
 import com.dyuproject.protostuff.runtime.OnDemandIdStrategy
 import com.dyuproject.protostuff.runtime.IncrementalIdStrategy
 import com.dyuproject.protostuff.runtime.DefaultIdStrategy
@@ -136,7 +137,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 					system.dynamicAccess.getClassFor[AnyRef](classname) match {
 						// TODO: IncrementalIdStrategy should allow for registrarion of enums, maps, collections
 						// automatically
-					case Right(clazz) => r.strategy.register(clazz)
+					case Right(clazz) => RegistryUtil.idFrom(clazz, r.strategy)
 					case Left(e) => { 
 							log.warning("Class could not be loaded and/or registered: {} ", classname) 
 							/* throw e */ 
