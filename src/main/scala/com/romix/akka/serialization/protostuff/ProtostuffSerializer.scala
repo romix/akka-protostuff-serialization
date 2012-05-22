@@ -24,7 +24,6 @@ import com.dyuproject.protostuff.ProtostuffIOUtil
 import com.dyuproject.protostuff.GraphIOUtil
 import com.dyuproject.protostuff.LinkedBuffer
 import com.dyuproject.protostuff.runtime.RegistryUtil
-import com.dyuproject.protostuff.runtime.OnDemandIdStrategy
 import com.dyuproject.protostuff.runtime.IncrementalIdStrategy
 import com.dyuproject.protostuff.runtime.DefaultIdStrategy
 import com.dyuproject.protostuff.runtime.ExplicitIdStrategy
@@ -100,7 +99,7 @@ class ProtostuffSerializer (val system: ExtendedActorSystem) extends Serializer 
 				val idNums = mappings.values map { case v => v.toInt }
 				val maxIdNum = if(!mappings.isEmpty) idNums.max else 1
 
-				val r = new OnDemandIdStrategy.Registry(
+				val r = new IncrementalIdStrategy.Registry(
 						maxIdNum+1+64, maxIdNum+1, 
 						maxIdNum+1+64, maxIdNum+1, 
 						maxIdNum+1+64, maxIdNum+1, // enums
