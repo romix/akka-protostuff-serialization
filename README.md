@@ -65,9 +65,9 @@ The following options are available for configuring this serializer:
 			# Define mappings from a fully qualified class name to a numeric id.  
 			# Smaller ids lead to smaller sizes of serialized representations.  
 			#  
-			# This section is mandatory for idstartegy=explciit  
-			# This section is optional  for idstartegy=incremental  
-			# This section is ignored   for idstartegy=default  
+			# This section is mandatory for idstrategy=explicit  
+			# This section is optional  for idstrategy=incremental  
+			# This section is ignored   for idstrategy=default  
 			#   
 			# The smallest possible id is 2   
 			mappings {  
@@ -78,9 +78,9 @@ The following options are available for configuring this serializer:
 			# Define a set of fully qualified class names for   
 			# classes to be used for serialization.  
 			#  
-			# This section is optional  for idstartegy=incremental  
-			# This section is ignored   for idstartegy=default  
-			# This section is ignored   for idstartegy=explicit  
+			# This section is optional  for idstrategy=incremental  
+			# This section is ignored   for idstrategy=default  
+			# This section is ignored   for idstrategy=explicit  
 			classes = [  
 				"package3.name3.className3",  
 				"package4.name4.className4"  
